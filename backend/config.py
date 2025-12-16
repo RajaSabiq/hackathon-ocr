@@ -24,10 +24,11 @@ SUPPORTED_MIME_TYPES = {
 }
 
 # OCR settings
-# Simplified Tesseract config - removed problematic character whitelist
+# Tesseract config compatible with version 3.x (no --oem flag)
+# PSM 6 = Assume a single uniform block of text
 TESSERACT_CONFIG = os.getenv(
     "TESSERACT_CONFIG", 
-    r'--oem 3 --psm 6'
+    r'--psm 6'
 )
 
 # Image preprocessing settings

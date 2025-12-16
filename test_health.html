@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Backend Health Check</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 OCR Backend Health Check</h1>
+        
+        <div class="info">
+            <strong>Backend URL:</strong> <span id="backendUrl">http://localhost:8000</span><br>
+            <strong>Status:</strong> <span id="connectionStatus">Not tested yet</span>
+        </div>
+
+        <button onclick="testHealth()">🔍 Test Health Endpoint</button>
+        <button onclick="testFormats()">📋 Test Supported Formats</button>
+        <button onclick="testAll()">🚀 Test All Endpoints</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        async function testHealth() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="status loading">⏳ Testing health endpoint...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/health`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('connectionStatus').textContent = '✅ Connected';
+                    resultDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ Backend is healthy!
+                        </div>
+                        <h3>Health Response:</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="status error">
+                            ❌ Backend returned error: ${response.status}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('connectionStatus').textContent = '❌ Connection failed';
+                resultDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Cannot connect to backend!
+                        <br><br>
+                        <strong>Error:</strong> ${error.message}
+                        <br><br>
+                        <strong>Possible causes:</strong>
+                        <ul>
+                            <li>Backend is not running (run: <code>python backend/main.py</code>)</li>
+                            <li>Backend is running on a different port</li>
+                            <li>CORS is blocking the request</li>
+                            <li>Firewall is blocking the connection</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        async function testFormats() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="status loading">⏳ Testing supported formats endpoint...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/supported-formats`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ Supported formats retrieved!
+                        </div>
+                        <h3>Supported Formats:</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="status error">
+                            ❌ Error: ${response.status}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Cannot connect to backend!
+                        <br><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testAll() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="status loading">⏳ Running all tests...</div>';
+
+            const tests = [
+                { name: 'Health Check', url: '/api/health' },
+                { name: 'Supported Formats', url: '/api/supported-formats' }
+            ];
+
+            let results = '<h3>Test Results:</h3>';
+            let allPassed = true;
+
+            for (const test of tests) {
+                try {
+                    const response = await fetch(`${API_BASE}${test.url}`);
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        results += `
+                            <div class="status success">
+                                ✅ ${test.name}: PASSED
+                            </div>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        `;
+                    } else {
+                        allPassed = false;
+                        results += `
+                            <div class="status error">
+                                ❌ ${test.name}: FAILED (${response.status})
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    allPassed = false;
+                    results += `
+                        <div class="status error">
+                            ❌ ${test.name}: ERROR - ${error.message}
+                        </div>
+                    `;
+                }
+            }
+
+            if (allPassed) {
+                document.getElementById('connectionStatus').textContent = '✅ All tests passed';
+                results = '<div class="status success">🎉 All tests passed! Backend is working correctly.</div>' + results;
+            } else {
+                document.getElementById('connectionStatus').textContent = '⚠️ Some tests failed';
+                results = '<div class="status error">⚠️ Some tests failed. Check details below.</div>' + results;
+            }
+
+            resultDiv.innerHTML = results;
+        }
+
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            setTimeout(testHealth, 500);
+        });
+    </script>
+</body>
+</html>

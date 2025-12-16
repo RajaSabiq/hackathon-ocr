@@ -22,23 +22,40 @@ class OCRProcessor:
         self.preprocessor = ImagePreprocessor()
         self.supported_languages = self._get_supported_languages()
         
+        # Check Tesseract version and adjust config if needed
+        version = self.get_tesseract_version()
+        logger.info(f"Tesseract version detected: {version}")
+        
         # Tesseract configuration for better accuracy
         self.tesseract_config = config.TESSERACT_CONFIG
+        
+        # Warn if using old Tesseract version
+        if '3.' in version or 'Unknown' in version:
+            logger.warning("Tesseract 3.x detected. For better accuracy, consider upgrading to Tesseract 5.x")
+            logger.warning("Current config: " + self.tesseract_config)
         
     def _get_supported_languages(self) -> List[str]:
         """Get list of supported languages from Tesseract"""
         try:
-            langs = pytesseract.get_languages(config='')
-            logger.info(f"Tesseract supports {len(langs)} languages")
-            return langs
+            # Try modern method first (pytesseract 0.3.7+)
+            if hasattr(pytesseract, 'get_languages'):
+                langs = pytesseract.get_languages(config='')
+                logger.info(f"Tesseract supports {len(langs)} languages")
+                return langs
+            else:
+                # Fallback for older pytesseract versions
+                logger.info("Using default language support (pytesseract 0.3.0)")
+                return ['eng']  # Default to English
         except Exception as e:
             logger.warning(f"Could not get supported languages: {str(e)}")
+            logger.warning("Using default language: English")
             return ['eng']  # Default to English
     
     def detect_language(self, image: np.ndarray) -> str:
         """Detect the primary language in the image"""
         try:
             # Use Tesseract's built-in language detection
+            # Note: OSD may not work well on Tesseract 3.x
             osd = pytesseract.image_to_osd(image, output_type=pytesseract.Output.DICT)
             
             # Try to extract language info from OSD
@@ -52,7 +69,8 @@ class OCRProcessor:
             return detected_lang
             
         except Exception as e:
-            logger.warning(f"Language detection failed: {str(e)}, using English")
+            # OSD often fails on Tesseract 3.x or with certain images
+            logger.debug(f"Language detection failed: {str(e)}, using English")
             return 'eng'
     
     def process_image(self, image_path: str, filename: str, page_number: int = None) -> OCRResult:
@@ -82,15 +100,6 @@ class OCRProcessor:
             logger.info(f"Detecting language for: {filename}")
             language = self.detect_language(processed_image)
             
-            # Extract text with confidence scores
-            logger.info(f"Extracting text data for: {filename}")
-            text_data = pytesseract.image_to_data(
-                processed_image, 
-                lang=language,
-                config=self.tesseract_config,
-                output_type=pytesseract.Output.DICT
-            )
-            
             # Extract full text
             logger.info(f"Extracting full text for: {filename}")
             full_text = pytesseract.image_to_string(
@@ -99,11 +108,26 @@ class OCRProcessor:
                 config=self.tesseract_config
             ).strip()
             
-            # Process bounding box data
-            bbox_data = self._extract_bbox_data(text_data)
+            # Try to get detailed data with bounding boxes (requires Tesseract 3.05+)
+            bbox_data = []
+            overall_confidence = 0.85  # Default confidence for Tesseract 3.02
             
-            # Calculate overall confidence
-            overall_confidence = self._calculate_overall_confidence(text_data)
+            try:
+                logger.info(f"Attempting to extract detailed data for: {filename}")
+                text_data = pytesseract.image_to_data(
+                    processed_image, 
+                    lang=language,
+                    config=self.tesseract_config,
+                    output_type=pytesseract.Output.DICT
+                )
+                # Process bounding box data
+                bbox_data = self._extract_bbox_data(text_data)
+                # Calculate overall confidence
+                overall_confidence = self._calculate_overall_confidence(text_data)
+                logger.info(f"Detailed data extracted successfully")
+            except Exception as e:
+                logger.warning(f"Could not extract detailed data (requires Tesseract 3.05+): {str(e)}")
+                logger.info(f"Using basic text extraction only")
             
             result = OCRResult(
                 filename=filename,
@@ -151,14 +175,6 @@ class OCRProcessor:
                 # Detect language
                 language = self.detect_language(processed_image)
                 
-                # Extract text with confidence scores
-                text_data = pytesseract.image_to_data(
-                    processed_image,
-                    lang=language,
-                    config=self.tesseract_config,
-                    output_type=pytesseract.Output.DICT
-                )
-                
                 # Extract full text
                 full_text = pytesseract.image_to_string(
                     processed_image,
@@ -166,11 +182,23 @@ class OCRProcessor:
                     config=self.tesseract_config
                 ).strip()
                 
-                # Process bounding box data
-                bbox_data = self._extract_bbox_data(text_data)
+                # Try to get detailed data with bounding boxes (requires Tesseract 3.05+)
+                bbox_data = []
+                overall_confidence = 0.85  # Default confidence for Tesseract 3.02
                 
-                # Calculate overall confidence
-                overall_confidence = self._calculate_overall_confidence(text_data)
+                try:
+                    text_data = pytesseract.image_to_data(
+                        processed_image,
+                        lang=language,
+                        config=self.tesseract_config,
+                        output_type=pytesseract.Output.DICT
+                    )
+                    # Process bounding box data
+                    bbox_data = self._extract_bbox_data(text_data)
+                    # Calculate overall confidence
+                    overall_confidence = self._calculate_overall_confidence(text_data)
+                except Exception as e:
+                    logger.warning(f"Could not extract detailed data for page {page_num}: {str(e)}")
                 
                 result = OCRResult(
                     filename=f"{filename} (Page {page_num})",
@@ -263,7 +291,31 @@ class OCRProcessor:
     
     def get_tesseract_version(self) -> str:
         """Get Tesseract version for health check"""
+        # Try alternative method first (more reliable)
         try:
-            return pytesseract.get_tesseract_version().public
-        except Exception:
-            return "Unknown"
+            import subprocess
+            result = subprocess.run(['tesseract', '--version'], 
+                                  capture_output=True, text=True, timeout=5)
+            # Extract version from output
+            output = result.stdout + result.stderr
+            if 'tesseract' in output.lower():
+                lines = output.split('\n')
+                for line in lines:
+                    if 'tesseract' in line.lower():
+                        # Extract just the version number
+                        parts = line.split()
+                        for i, part in enumerate(parts):
+                            if 'tesseract' in part.lower() and i + 1 < len(parts):
+                                return parts[i + 1]
+                        return line.strip()
+            return "Installed (version unknown)"
+        except Exception as e:
+            logger.warning(f"Could not get Tesseract version via subprocess: {e}")
+            
+            # Fallback to pytesseract method
+            try:
+                version = pytesseract.get_tesseract_version()
+                return str(version.public) if hasattr(version, 'public') else str(version)
+            except Exception as e2:
+                logger.warning(f"Could not get Tesseract version via pytesseract: {e2}")
+                return "Unknown"

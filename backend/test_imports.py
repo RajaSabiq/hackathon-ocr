@@ -18,10 +18,21 @@ except ImportError as e:
 try:
     print("✓ Testing pytesseract...")
     import pytesseract
-    version = pytesseract.get_tesseract_version()
-    print(f"  Tesseract version: {version}")
-except Exception as e:
-    print(f"✗ Tesseract import/check failed: {e}")
+    try:
+        version = pytesseract.get_tesseract_version()
+        print(f"  Tesseract version: {version}")
+        
+        # Check version compatibility
+        version_str = str(version)
+        if version_str.startswith('3.'):
+            print(f"  ⚠️  WARNING: Tesseract 3.x detected - this is very old!")
+            print(f"  ⚠️  Please upgrade to Tesseract 4.0+ or 5.0+ for best results")
+            print(f"  ⚠️  Download from: https://github.com/UB-Mannheim/tesseract/wiki")
+    except Exception as e:
+        print(f"  ⚠️  Could not get Tesseract version: {e}")
+        print(f"  Attempting to continue anyway...")
+except ImportError as e:
+    print(f"✗ Tesseract import failed: {e}")
     print("  Make sure Tesseract OCR is installed and in PATH")
     sys.exit(1)
 
