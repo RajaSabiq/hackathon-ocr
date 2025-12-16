@@ -1,0 +1,296 @@
+.results-container {
+  width: 100%;
+  margin-top: 2rem;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.results-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.75rem;
+}
+
+.job-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.job-id {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #6c757d;
+  background: #f8f9fa;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.results-count {
+  font-size: 0.9rem;
+  color: #495057;
+  font-weight: 500;
+}
+
+.file-selector {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.file-selector label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.file-selector select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.9rem;
+  min-width: 200px;
+}
+
+.result-card {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.result-header {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.file-info h3 {
+  margin: 0 0 0.75rem 0;
+  color: #333;
+  font-size: 1.25rem;
+  word-break: break-word;
+}
+
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.metadata span {
+  padding: 0.25rem 0.5rem;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+  font-weight: 500;
+}
+
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+}
+
+.btn-primary.success {
+  background: #28a745;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #545b62;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #1e7e34;
+}
+
+.text-content {
+  padding: 1.5rem;
+}
+
+.text-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.extracted-text h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.text-output {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1.5rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 400px;
+  overflow-y: auto;
+  color: #333;
+}
+
+.text-output em {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.bounding-box-info {
+  border-top: 1px solid #dee2e6;
+  padding: 1.5rem;
+  background: #f8f9fa;
+}
+
+.bounding-box-info h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.bbox-stats {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.low-confidence-words h5 {
+  margin: 0 0 0.75rem 0;
+  color: #333;
+  font-size: 1rem;
+}
+
+.word-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.low-confidence-word {
+  background: #fff5f5;
+  color: #dc3545;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #f5c6cb;
+  font-size: 0.8rem;
+  cursor: help;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .results-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .job-info {
+    align-items: flex-start;
+  }
+  
+  .result-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .result-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .metadata {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .text-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .bbox-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .file-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .file-selector select {
+    width: 100%;
+    min-width: unset;
+  }
+}
